@@ -91,13 +91,14 @@ A full featured interface for option definition.
 
 ### shortName
 A single character string giving the short name of the option. Can't
-be a dash (-) or an equal sign (=). Can be an array with multiple short
+be a dash (-) or an equal sign (=). Can be an array of multiple short
 aliases of the same option.
 
 ### longName
 A multicharacter string giving the long name of the option. Can't be a
 single character and can't contain an equal sign (=). The first or the
-last character can't be a dash (-).
+last character can't be a dash (-). Can be an array of multiple long
+aliases of the same option.
 
 ### hasArg
 If false, the option does not accept an argument. If true,

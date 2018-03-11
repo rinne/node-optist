@@ -1,6 +1,6 @@
 {
 	"name": "optist",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"description": "Command line option parser",
 	"main": "optist.js",
 	"dependencies": {
@@ -17,7 +17,11 @@
 	},
 	"keywords": [
 		"command-line",
-		"getopt"
+		"getopt",
+		"argv",
+		"minimist",
+		"optimist",
+		"yargs"
 	],
 	"author": {
 		"name": "Timo J. Rinne",
