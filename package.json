@@ -1,0 +1,32 @@
+{
+	"name": "optist",
+	"version": "0.0.1",
+	"description": "Command line option parser",
+	"main": "optist.js",
+	"dependencies": {
+	},
+	"scripts": {
+		"test": "node ./test/optist-test.js"
+	},
+	"engines": {
+		"node": ">=4.2.0"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/rinne/node-optist.git"
+	},
+	"keywords": [
+		"command-line",
+		"getopt"
+	],
+	"author": {
+		"name": "Timo J. Rinne",
+		"email": "tri@iki.fi",
+		"url": "https://github.com/rinne/"
+	},
+	"license": "GPL-2.0",
+	"bugs": {
+		"url": "https://github.com/rinne/node-optist/issues"
+	},
+	"homepage": "https://github.com/rinne/node-optist#readme"
+}
