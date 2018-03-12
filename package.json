@@ -1,6 +1,6 @@
 {
 	"name": "optist",
-	"version": "0.0.3",
+	"version": "0.0.4",
 	"description": "Command line option parser",
 	"main": "optist.js",
 	"dependencies": {
@@ -28,7 +28,7 @@
 		"email": "tri@iki.fi",
 		"url": "https://github.com/rinne/"
 	},
-	"license": "GPL-2.0",
+	"license": "MIT",
 	"bugs": {
 		"url": "https://github.com/rinne/node-optist/issues"
 	},

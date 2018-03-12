@@ -117,6 +117,7 @@ Optist.prototype.o = function(shortName,
 		required: required,
 		multi: multi,
 		optArgCb: undefined,
+		description: undefined,
 		value: undefined,
 		lastSeen: undefined
 	};
@@ -170,6 +171,24 @@ Optist.prototype.o = function(shortName,
 	}
 	return this;
 };
+
+Optist.prototype.attachDescription = function(name, description) {
+	if (this._parsed) {
+		throw new Error('Options already parsed');
+	}
+	var o = this._opts.get(name);
+	if (o === undefined) {
+		throw new Error('Unable to find option ' + name);
+	}
+	if (typeof(description) !== 'string') {
+		throw new Error('Invalid description for option');
+	}
+	if (o.description !== undefined) {
+		throw new Error('Argument description can be set only once');
+	}
+	o.description = description;
+	return this;
+}
 
 Optist.prototype.attachOptArgCb = function(name, optArgCb) {
 	if (this._parsed) {

@@ -90,6 +90,11 @@ times. All passed arguments are collected in an array and are
 available as a value after the parsing. If the option is not present
 in the argument list at all, then the value is an empty array.
 
+Optist.prototype.attachDescription = function(name, description)
+----------------------------------------------------------------
+
+Attach a free form text description for an option. This can be done
+only once for each individual option.
 
 Optist.prototype.attachOptArgCb(name, optArgCb)
 -----------------------------------------------
