@@ -162,6 +162,17 @@ of the option, side effects are not desireable.
 
 Pre-made callbacks are available in util module of the optist package.
 
+Optist.prototype.additional(restRequireMin, restRequireMax)
+-----------------------------------------------------------
+
+Set the minimum and/or maximum number of additional parameters that
+must be left in the argument list after the options have been
+parsed. This can be done only before parsing and can be set only once.
+Alternatively the limits can be set also with additional function
+arguments for parse/parsePosix methods, but it is recommended to use
+Optist.prototype.additional API instead, because the information can
+in future, also be enclosed into usage messages.
+
 Optist.prototype.parse(av, restRequireMin, restRequireMax)
 ----------------------------------------------------------
 

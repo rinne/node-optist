@@ -10,6 +10,39 @@ var Optist = function() {
 	this._parsed = false;
 	this._snl = [];
 	this._explicitlyStopped = false;
+	this._restRequireMin = undefined;
+	this._restRequireMax = undefined;
+};
+
+Optist.prototype.additional = function(restRequireMin, restRequireMax) {
+	if (this._parsed) {
+		throw new Error('Options already parsed');
+	}
+	if ((restRequireMin === undefined) && (restRequireMax === undefined)) {
+		return this;
+	}
+	if (((this._restRequireMin !== undefined) || (this._restRequireMax !== undefined)) &&
+		((this._restRequireMin !== restRequireMin) || (this._restRequireMax !== restRequireMax))) {
+		throw new Error('Limits for number of additional parameters can be set only once');
+	}
+	if (restRequireMin !== undefined) {
+		if (! (Number.isSafeInteger(restRequireMin) && (restRequireMin >= 0))) {
+			throw new Error('Illegal value for additional parameter minimum limit');
+		}
+	}
+	if (restRequireMax !== undefined) {
+		if (! (Number.isSafeInteger(restRequireMax) && (restRequireMax >= 0))) {
+			throw new Error('Illegal value for additional parameter maximum limit');
+		}
+	}
+	if (! ((restRequireMin === undefined) ||
+		   (restRequireMax === undefined) ||
+		   (restRequireMax >= restRequireMin))) {
+		throw new Error('Mutually incompatible values for additional parameter limits');
+	}
+	this._restRequireMin = restRequireMin;
+	this._restRequireMax = restRequireMax;
+	return this;
 };
 
 Optist.prototype.simple = function(shortName, longName) {
@@ -222,13 +255,16 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
-	var m, n, o, a;
 	if (! av) {
 		av = process.argv.slice(2);
 	}
 	if (! Array.isArray(av)) {
 		throw new Error('Bad argument list');
 	}
+	if ((restRequireMin !== undefined) || (restRequireMax !== undefined)) {
+		this.additional(restRequireMin, restRequireMax)
+	}
+	var m, n, o, a;
 	while (av.length > 0) {
 		if (av[0] === '--') {
 			av.shift();
@@ -318,13 +354,13 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 							' not given');
 		}
 	}.bind(this));
-	if (restRequireMin !== undefined) {
-		if (av.length < restRequireMin) {
+	if (this._restRequireMin !== undefined) {
+		if (av.length < this._restRequireMin) {
 			throw new Error('Too few command line arguments after options');
 		}
 	}
-	if (restRequireMax !== undefined) {
-		if (av.length > restRequireMax) {
+	if (this._restRequireMax !== undefined) {
+		if (av.length > this._restRequireMax) {
 			throw new Error('Too many command line arguments after options');
 		}
 	}
@@ -340,6 +376,13 @@ Optist.prototype.parsePosix = function(av, restRequireMin, restRequireMax) {
 	if (! av) {
 		av = process.argv.slice(2);
 	}
+	if ((restRequireMin !== undefined) || (restRequireMax !== undefined)) {
+		this.additional(restRequireMin, restRequireMax)
+	}
+	restRequireMin = this._restRequireMin;
+	restRequireMax = this._restRequireMax;
+	this._restRequireMin = undefined;
+	this._restRequireMax = undefined;
 	var rest = [];
 	do {
 		this._parsed = false;
@@ -354,15 +397,17 @@ Optist.prototype.parsePosix = function(av, restRequireMin, restRequireMax) {
 			rest.push(av.shift());
 		}
 	} while(av.length > 0);
-	if (restRequireMin !== undefined) {
-		this._parsed = false;
-		if (av.length < restRequireMin) {
+	this._restRequireMin = restRequireMin;
+	this._restRequireMax = restRequireMax;
+	if (this._restRequireMin !== undefined) {
+		if (rest.length < this._restRequireMin) {
+			this._parsed = false;
 			throw new Error('Too few command line arguments after options');
 		}
 	}
-	if (restRequireMax !== undefined) {
-		this._parsed = false;
-		if (av.length > restRequireMax) {
+	if (this._restRequireMax !== undefined) {
+		if (rest.length > this._restRequireMax) {
+			this._parsed = false;
 			throw new Error('Too many command line arguments after options');
 		}
 	}
