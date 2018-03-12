@@ -183,6 +183,20 @@ Lookup the value of an option after parsing the command line. The name
 of the option can be given either as a long or short option name. If
 the option has multiple aliases, all names return the same value.
 
+Optist.prototype.values()
+-------------------------
+
+Return all option values agter parsing the command line. Return value
+is an object with all aliases of the options as properties and a
+corresponding option value as a value of each property. Options that
+have no value given in the command line or does not have a default
+value, are omitted. The exception is a multi type options that are
+either [] or 0 depending on whether they accept an argument or not.
+
+In addition, the non-option argument list (as returned with
+Optist.prototype.rest()) is stored to the object with property name
+consisting of a single dash (i.e. '-').
+
 Optist.prototype.forEach(cb)
 ----------------------------
 

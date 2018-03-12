@@ -348,6 +348,23 @@ Optist.prototype.value = function(name) {
 	return o.value;
 };
 
+Optist.prototype.values = function() {
+	if (! this._parsed) {
+		throw new Error('Options not yet parsed');
+	}
+	var r = {};
+	this._opts.forEach(function(_, k) {
+		if (! k.match(/^-\d+-$/)) {
+			var v = this.value(k);
+			if (v !== undefined) {
+				r[k] = v;
+			}
+		}
+	}.bind(this));
+	r['-'] = this.rest();
+	return r;
+};
+
 Optist.prototype.forEach = function(cb) {
 	if (! this._parsed) {
 		throw new Error('Options not yet parsed');
