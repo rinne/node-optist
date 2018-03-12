@@ -62,6 +62,21 @@ This is an option without arguments which can be passed multiple
 times. The value of the option is the number of times it was present
 in the argument list.
 
+Optist.prototype.string(shortName, longName, allowedValues)
+-----------------------------------------------------------
+
+A simple single-shot option with an optional set of allowed
+values. Parameter allowedValues can be either a single string or
+RegExp object or array of strings or RegExp objects or a mixed array
+of both. If the option is passed, the parsing fails in case the option
+argument does not match to any of the allowed values.
+
+Without allowedValues parameter, this function is alias of:
+```
+Optist.prototype.o(shortName, longName, true, false, undefined, false, undefined);
+
+```
+
 Optist.prototype.multi(shortName, longName)
 -------------------------------------------
 

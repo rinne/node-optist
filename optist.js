@@ -20,36 +20,48 @@ Optist.prototype.counter = function(shortName, longName) {
 	return this.o(shortName, longName, false, false, undefined, true, undefined);
 };
 
-Optist.prototype.multi = function(shortName, longName) {
-	return this.o(shortName, longName, true, false, undefined, true, undefined);
+Optist.prototype.string = function(shortName, longName, allowedValues) {
+	var cb;
+	if (allowedValues) {
+		if (typeof(allowedValues) === 'string') {
+			allowedValues = [ allowedValues ];
+		} else if (allowedValues instanceof RegExp) {
+			allowedValues = [ allowedValues ];
+		}
+		if (! Array.isArray(allowedValues)) {
+			throw new Error('Invalid allwed values');
+		}
+		allowedValues.forEach(function(x) {
+			if (! ((typeof(x) === 'string') || (x instanceof RegExp))) {
+				throw new Error('Allowed value must be a string or RegExp');
+			}
+		}.bind(this));
+		cb = function(v) {
+			if (allowedValues.some(function(x) {
+				if (typeof(x) === 'string') {
+					if (v === x) {
+						return true;
+					}
+				} else if (x instanceof RegExp) {
+					if (v.match(x)) {
+						return true;
+					}
+				}
+				return false;
+			}.bind(this))) {
+				return v;
+			}
+			return undefined;
+		}.bind(this);
+	} else {
+		allowedValues = undefined;
+		cb = undefined;
+	}
+	return this.o(shortName, longName, true, false, undefined, false, cb);
 };
 
-Optist.prototype.attachOptArgCb = function(name, optArgCb) {
-	if (this._parsed) {
-		throw new Error('Options already parsed');
-	}
-	var o = this._opts.get(name);
-	if (o === undefined) {
-		throw new Error('Unable to find option ' + name);
-	}
-	if (o.optArgCb) {
-		throw new Error('Argument callback can be set only once');
-	}
-	if (! opt.hasArg) {
-		throw new Error('Argument callback is only allowed for an option with argument');
-	}
-	if (typeof(optArgCb) !== 'function') {
-		throw new Error('Invalid argument callback');
-	}
-	if (o.defaultValue !== undefined) {
-		var ndv = optArgCb(o.defaultValue);
-		if (ndv === undefined) {
-			throw new Error('Default value is not accepted by argument callback');
-		}
-		o.defaultValue = nd;
-	}
-	o.optArgCb = optArgCb;
-	return this;
+Optist.prototype.multi = function(shortName, longName) {
+	return this.o(shortName, longName, true, false, undefined, true, undefined);
 };
 
 Optist.prototype.o = function(shortName,
@@ -156,6 +168,34 @@ Optist.prototype.o = function(shortName,
 			this._opts.set(n, opt);
 		}.bind(this));
 	}
+	return this;
+};
+
+Optist.prototype.attachOptArgCb = function(name, optArgCb) {
+	if (this._parsed) {
+		throw new Error('Options already parsed');
+	}
+	var o = this._opts.get(name);
+	if (o === undefined) {
+		throw new Error('Unable to find option ' + name);
+	}
+	if (o.optArgCb) {
+		throw new Error('Argument callback can be set only once');
+	}
+	if (! opt.hasArg) {
+		throw new Error('Argument callback is only allowed for an option with argument');
+	}
+	if (typeof(optArgCb) !== 'function') {
+		throw new Error('Invalid argument callback');
+	}
+	if (o.defaultValue !== undefined) {
+		var ndv = optArgCb(o.defaultValue);
+		if (ndv === undefined) {
+			throw new Error('Default value is not accepted by argument callback');
+		}
+		o.defaultValue = nd;
+	}
+	o.optArgCb = optArgCb;
 	return this;
 };
 
