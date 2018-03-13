@@ -12,12 +12,14 @@ Example
 const Optist = require('optist');
 
 var opt = ((new Optist())
-           .simple('a')
-           .simple('b')
-           .counter('c')
-           .simple('d', ['dddddd', 'dddddddd', 'DDD'])
-           .multi('m', 'multi-opt')
-           .parse());
+	   .simple('a')
+	   .simple('b')
+	   .counter('c')
+	   .simple('d', ['dddddd', 'dddddddd', 'DDD'])
+	   .string('s', 'string-of-3-chars', /^.{3}$/)
+	   .multi('m', 'multi-opt')
+	   .help('test')
+	   .parse());
 
 console.log('a', opt.value('a'));
 console.log('b', opt.value('b'));
@@ -191,7 +193,7 @@ exit code. This function can only be called before parsing.
 If parameter command is given, the program name is oveddidden in the
 help messages. Command defaults to:
 ```
-fs.basename(process.argv[0]) + ' ' + fs.basename(process.argv[1]).
+fs.basename(process.argv[0]) + ' ' + fs.basename(process.argv[1])
 ```
 
 Optist.prototype.parse(av, restRequireMin, restRequireMax)
@@ -277,12 +279,12 @@ const Optist = require('optist');
 const ou = require('optist/util');
 
 var opt = ((new Optist())
-           .o(undefined, 'integer-option', true, false, '42', false, ou.integerCb)
-           .parse())
+	   .o(undefined, 'integer-option', true, false, '42', false, ou.integerCb)
+	   .parse())
 console.log('integer option:',
-            opt.value('integer-option'),
-            'of type',
-            typeof(opt.value('integer-option')));
+	    opt.value('integer-option'),
+	    'of type',
+	    typeof(opt.value('integer-option')));
 ```
 
 
