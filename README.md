@@ -16,8 +16,8 @@ var opt = ((new Optist())
            .simple('a')
            .simple('b')
            .counter('c')
-	   .simple('d', ['dddddd', 'dddddddd', 'DDD'])
-	   .multi('m', 'multi-opt')
+           .simple('d', ['dddddd', 'dddddddd', 'DDD'])
+           .multi('m', 'multi-opt')
            .parse());
 
 console.log('a', opt.value('a'));
@@ -90,11 +90,18 @@ times. All passed arguments are collected in an array and are
 available as a value after the parsing. If the option is not present
 in the argument list at all, then the value is an empty array.
 
-Optist.prototype.attachDescription = function(name, description)
-----------------------------------------------------------------
+Optist.prototype.describeOpt = function(name, description)
+----------------------------------------------------------
 
 Attach a free form text description for an option. This can be done
 only once for each individual option.
+
+Optist.prototype.describeParam(num, name, description)
+------------------------------------------------------
+
+Attach a name and a free form text description for an additional
+command line parameter. This can be done only once for each individual
+parameter. Parameters are numbered from 0 up.
 
 Optist.prototype.attachOptArgCb(name, optArgCb)
 -----------------------------------------------

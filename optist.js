@@ -12,11 +12,19 @@ var Optist = function() {
 	this._explicitlyStopped = false;
 	this._restRequireMin = undefined;
 	this._restRequireMax = undefined;
+	this._paramName = [];
+	this._paramDescription = [];
 };
 
 Optist.prototype.additional = function(restRequireMin, restRequireMax) {
 	if (this._parsed) {
 		throw new Error('Options already parsed');
+	}
+	if (restRequireMin === null) {
+		restRequireMin = undefined;
+	}
+	if (restRequireMax === null) {
+		restRequireMax = undefined;
 	}
 	if ((restRequireMin === undefined) && (restRequireMax === undefined)) {
 		return this;
@@ -205,7 +213,37 @@ Optist.prototype.o = function(shortName,
 	return this;
 };
 
-Optist.prototype.attachDescription = function(name, description) {
+Optist.prototype.describeParam = function(num, name, description) {
+	if (this._parsed) {
+		throw new Error('Options already parsed');
+	}
+	if (name === null) {
+		name = undefined;
+	}
+	if (description === null) {
+		description = undefined;
+	}
+	if (! (Number.isSafeInteger(num) && (num >= 0))) {
+		throw new Error('Invalid parameter number');
+	}
+	if (name && (typeof(name) !== 'string')) {
+		throw new Error('Invalid parameter name');
+	}
+	if (description && (typeof(description) !== 'string')) {
+		throw new Error('Invalid parameter description');
+	}
+	if ((this._paramName[num] !== undefined) || (this._paramDescription[num] !== undefined)) {
+		throw new Error('Parameter description can be set only once for each parameter');
+	}
+	if (! name) {
+		name = 'param' + (num + 1).toFixed(0);
+	}
+	this._paramName[num] = name;
+	this._paramDescription[num] = description;
+	return this;
+}
+
+Optist.prototype.describeOpt = function(name, description) {
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
@@ -482,6 +520,104 @@ Optist.prototype.forEach = function(cb) {
 		cb(o.shortName, o.longName, v);
 	}.bind(this));
 	return this;
+};
+
+Optist.prototype.generateHelp = function(cmd) {
+	var	i, r, maxLongOptLen = 0;
+	var hasOpts = false, hasShortOpts = false, hasLongOpts = false;
+	var hasOptArgs = false, hasShortOptArgs = false, hasLongOptArgs = false;
+	if (! ((typeof(cmd) === 'string') && (cmd !== ''))) {
+		cmd = process.argv[0].replace(/^.*\//, '') + ' ' + process.argv[1].replace(/^.*\//, '');
+	}
+	this._snl.forEach(function(n) {
+		var o = this._opts.get(n);
+		hasOpts = true;
+		if (o.shortName) {
+			hasShortOpts = true;
+			if (o.hasArg) {
+				hasShortOptArgs = true;
+			}
+		}
+		if (o.longName) {
+			hasLongOpts = true;
+			maxLongOptLen = Math.max(maxLongOptLen, o.longName.length);
+			if (o.hasArg) {
+				hasLongOptArgs = true;
+			}
+		}
+		if (o.hasArg) {
+			hasOptArgs = true;
+		}
+	}.bind(this));
+	if (hasOpts) {
+		r = cmd + ' [<opt> ...]';
+	} else {
+		r = cmd;
+	}
+	if (((this._restRequireMin === undefined) && (this._restRequireMax === undefined)) ||
+		((this._restRequireMin !== undefined) && (this._restRequireMin > 10)) ||
+		((this._restRequireMax !== undefined) && (this._restRequireMax > 10))) {
+		r += ' [<param> ...]';
+	} else if ((this._restRequireMin !== undefined) && (this._restRequireMax === undefined)) {
+		for (i = 0; i < this._restRequireMin; i++) {
+			r += ' <' + ((this._paramName[i] !== undefined) ? this._paramName[i] : ('param' + (i+1).toFixed(0))) + '>';
+		}
+		r += ' [ <param> ...]';
+	} else if ((this._restRequireMin === undefined) && (this._restRequireMax !== undefined)) {
+		for (i = 0; i < this._restRequireMax; i++) {
+			r += ' [<' + ((this._paramName[i] !== undefined) ? this._paramName[i] : ('param' + (i+1).toFixed(0))) + '>';
+		}
+		r += (']').repeat(this._restRequireMax);
+	} else {
+		for (i = 0; i < this._restRequireMin; i++) {
+			r += ' <' + ((this._paramName[i] !== undefined) ? this._paramName[i] : ('param' + (i+1).toFixed(0))) + '>';
+		}
+		for (/*NOTHING*/; i < this._restRequireMax; i++) {
+			r += ' [<' + ((this._paramName[i] !== undefined) ? this._paramName[i] : ('param' + (i+1).toFixed(0))) + '>';
+		}
+		r += (']').repeat(this._restRequireMax - this._restRequireMin);
+	}
+	if (hasOpts) {
+		r += "\n" + '  Options:'
+		this._snl.forEach(function(n) {
+			var o = this._opts.get(n), lo;;
+			r += "\n    ";
+			if (hasShortOpts) {
+				if (o.shortName) {
+					r += ' -' + o.shortName;
+					if (hasShortOptArgs) {
+						if (o.hasArg) {
+							r += ' <arg>';
+						} else {
+							r += '      ';
+						}
+					}
+				} else {
+					r += '   ' + (hasShortOptArgs ? '      ' : '');
+				}
+			}
+			if (hasLongOpts) {
+				lo = '';
+				if (o.longName) {
+					lo += '--' + o.longName;
+					if (hasLongOptArgs) {
+						if (o.hasArg) {
+							lo += '=<arg>';
+						} else {
+							lo += '      ';
+						}
+					}
+				}
+				r += (' ' +
+					  (hasShortOpts ? ' ' : '') +
+					  (lo + (' ').repeat(maxLongOptLen + 32)).slice(0, 2 + maxLongOptLen + (hasLongOptArgs ? 6 : 0)));
+			}
+			if (o.description) {
+				r += '  ' + o.description;
+			}
+		}.bind(this));
+	}
+	return r;
 };
 
 module.exports = Optist;
