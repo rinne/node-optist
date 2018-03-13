@@ -14,6 +14,8 @@ var Optist = function() {
 	this._restRequireMax = undefined;
 	this._paramName = [];
 	this._paramDescription = [];
+	this._help = false;
+	this._helpCmd = undefined;
 };
 
 Optist.prototype.additional = function(restRequireMin, restRequireMax) {
@@ -302,7 +304,7 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 	if ((restRequireMin !== undefined) || (restRequireMax !== undefined)) {
 		this.additional(restRequireMin, restRequireMax)
 	}
-	var m, n, o, a;
+	var m, n, o, a, em;
 	while (av.length > 0) {
 		if (av[0] === '--') {
 			av.shift();
@@ -316,22 +318,33 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 			(m = av[0].match(/^(-.*()()())$/))) {
 			av.shift();
 			if (m[2] === '') {
-				throw new Error('Malformed option ' + m[1]);
+				em = 'Malformed option ' + m[1];
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
 			}
 			if ((m[1] === '-') && (m[2].length > 1)) {
 				m[2].split('').forEach(function(n) {
 					o = this._opts.get(n);
 					if (o === undefined) {
-						throw new Error('Unknown option -' + n);
+						em = 'Unknown option -' + n;
+						this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+						throw new Error(em);
+					}
+					if (o.thisIsHelp) {
+						this.showHelpAndExit(0);
 					}
 					if (o.hasArg) {
-						throw new Error('Options with arguments must not be combined');
+						em = 'Options with arguments must not be combined';
+						this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+						throw new Error(em);
 					}
 					if (o.multi) {
 						o.value++;
 					} else {
 						if (o.value) {
-							throw new Error('Option -' + n + ' is only allowed once');
+							em = 'Option -' + n + ' is only allowed once';
+							this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+							throw new Error(em);
 						}
 						o.value = true;
 					}
@@ -342,7 +355,12 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 			n = m[1] + m[2];
 			o = this._opts.get(m[2]);
 			if (o === undefined) {
-				throw new Error('Unknown option ' + n);
+				em = 'Unknown option ' + n;
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
+			}
+			if (o.thisIsHelp) {
+				this.showHelpAndExit(0);
 			}
 			if (o.hasArg) {
 				if (m[3] === '=') {
@@ -350,11 +368,15 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 				} else if (av.length >= 1) {
 					a = av.shift();
 				} else {
-					throw new Error('Option ' + n + ' requires an argument');
+					em = 'Option ' + n + ' requires an argument';
+					this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+					throw new Error(em);
 				}
 			} else {
 				if (m[3] === '=') {
-					throw new Error('Option ' + n + ' does not accept an argument');
+					em = 'Option ' + n + ' does not accept an argument';
+					this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+					throw new Error(em);
 				}
 			}
 		} else {
@@ -363,7 +385,9 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 		if (o.hasArg && o.optArgCb) {
 			var aa = (o.optArgCb)(a, n);
 			if (aa === undefined) {
-				throw new Error('Invalid argument "' + a + '" for option ' + n);
+				em = 'Invalid argument "' + a + '" for option ' + n;
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
 			}
 			a = aa;
 		}
@@ -373,12 +397,16 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 			o.value++;
 		} else if (o.hasArg) {
 			if (o.value !== undefined) {
-				throw new Error('Option ' + n + ' is only allowed once');
+				em = 'Option ' + n + ' is only allowed once';
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
 			}
 			o.value = a;
 		} else {
 			if (o.value) {
-				throw new Error('Option ' + n + ' is only allowed once');
+				em = 'Option ' + n + ' is only allowed once';
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
 			}
 			o.value = true;
 		}
@@ -387,19 +415,25 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 	this._snl.forEach(function(n) {
 		o = this._opts.get(n);
 		if (o.required && (o.value === undefined)) {
-			throw new Error('Required option ' +
-							(o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
-							' not given');
+			em = ('Required option ' +
+				  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+				  ' not given');
+			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+			throw new Error(em);
 		}
 	}.bind(this));
 	if (this._restRequireMin !== undefined) {
 		if (av.length < this._restRequireMin) {
-			throw new Error('Too few command line arguments after options');
+			em = 'Too few command line arguments after options';
+			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+			throw new Error(em);
 		}
 	}
 	if (this._restRequireMax !== undefined) {
 		if (av.length > this._restRequireMax) {
-			throw new Error('Too many command line arguments after options');
+			em = 'Too many command line arguments after options';
+			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+			throw new Error(em);
 		}
 	}
 	this._rest = Array.from(av);
@@ -408,6 +442,7 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 }
 
 Optist.prototype.parsePosix = function(av, restRequireMin, restRequireMax) {
+	var em;
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
@@ -440,13 +475,17 @@ Optist.prototype.parsePosix = function(av, restRequireMin, restRequireMax) {
 	if (this._restRequireMin !== undefined) {
 		if (rest.length < this._restRequireMin) {
 			this._parsed = false;
-			throw new Error('Too few command line arguments after options');
+			em = 'Too few command line arguments after options';
+			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+			throw new Error(em);
 		}
 	}
 	if (this._restRequireMax !== undefined) {
 		if (rest.length > this._restRequireMax) {
 			this._parsed = false;
-			throw new Error('Too many command line arguments after options');
+			em = 'Too many command line arguments after options';
+			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+			throw new Error(em);
 		}
 	}
 	this._rest = rest;
@@ -522,6 +561,28 @@ Optist.prototype.forEach = function(cb) {
 	return this;
 };
 
+Optist.prototype.help = function(cmd) {
+	if (this._parsed) {
+		throw new Error('Options already parsed');
+	}
+	if (this._help) {
+		throw new Error('Automatic help can be set only once');
+	}
+	if (! ((typeof(cmd) === 'string') && (cmd !== ''))) {
+		cmd = undefined;
+	}
+	if (this._opts.has('h') || this._opts.has('help')) {
+		throw new Error('Option definition conflict in help');
+	}
+	this._help = true;
+	this._helpCmd = cmd;
+	this.simple('h', 'help');
+	this.describeOpt('help', 'Show help and exit');
+	var o = this._opts.get('help');
+	o.thisIsHelp = true;
+	return this;
+};
+
 Optist.prototype.generateHelp = function(cmd) {
 	var	i, r, maxLongOptLen = 0;
 	var hasOpts = false, hasShortOpts = false, hasLongOpts = false;
@@ -578,10 +639,10 @@ Optist.prototype.generateHelp = function(cmd) {
 		r += (']').repeat(this._restRequireMax - this._restRequireMin);
 	}
 	if (hasOpts) {
-		r += "\n" + '  Options:'
+		r += "\n" + 'Options:'
 		this._snl.forEach(function(n) {
 			var o = this._opts.get(n), lo;;
-			r += "\n    ";
+			r += "\n ";
 			if (hasShortOpts) {
 				if (o.shortName) {
 					r += ' -' + o.shortName;
@@ -618,6 +679,33 @@ Optist.prototype.generateHelp = function(cmd) {
 		}.bind(this));
 	}
 	return r;
+};
+
+Optist.prototype.showErrorMessageHelpAndExitIfHelpEnabled = function(message, exitValue) {
+	if (! this._help) {
+		return this;
+	}
+	try {
+		var m = ((((typeof(message) === 'string') && (message !== '')) ? ('Error: ' + message + "\n") : '') +
+				 "Usage:\n  " +
+				 this.generateHelp(this._helpCmd));
+		console.log(m);
+	} catch(e) {
+		console.log('Fatal usage error');
+	}
+	process.exit(exitValue);
+	process.exit(1);
+};
+
+Optist.prototype.showHelpAndExit = function(exitValue) {
+	try {
+		var m = "Usage:\n  " + this.generateHelp(this._helpCmd);
+		console.log(m);
+	} catch(e) {
+		console.log('Fatal usage error');
+	}
+	process.exit(exitValue);
+	process.exit(1);
 };
 
 module.exports = Optist;

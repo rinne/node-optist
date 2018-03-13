@@ -4,7 +4,6 @@ In a Nutshell
 This is a command line option parser that tries not to outsmart the
 user, but still tries to get the job done.
 
-This is still work in progress but already usable.
 
 Example
 =======
@@ -179,6 +178,21 @@ Alternatively the limits can be set also with additional function
 arguments for parse/parsePosix methods, but it is recommended to use
 Optist.prototype.additional API instead, because the information can
 in future, also be enclosed into usage messages.
+
+Optist.prototype.help(command)
+------------------------------
+
+Enable the automatic help message generation and attach it to command
+line options -h and --help. Those options must not be otherwise
+attached. In case of parsing error of command line options, the help
+message is automatically shown and program terminated with non-zero
+exit code. This function can only be called before parsing.
+
+If parameter command is given, the program name is oveddidden in the
+help messages. Command defaults to:
+```
+fs.basename(process.argv[0]) + ' ' + fs.basename(process.argv[1]).
+```
 
 Optist.prototype.parse(av, restRequireMin, restRequireMax)
 ----------------------------------------------------------
