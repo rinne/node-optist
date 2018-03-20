@@ -12,14 +12,16 @@ Example
 const Optist = require('optist');
 
 var opt = ((new Optist())
-	   .simple('a')
-	   .simple('b')
-	   .counter('c')
-	   .simple('d', ['dddddd', 'dddddddd', 'DDD'])
-	   .string('s', 'string-of-3-chars', /^.{3}$/)
-	   .multi('m', 'multi-opt')
-	   .help('test')
-	   .parse());
+           .simple('a')
+           .simple('b')
+           .counter('c')
+           .simple('d', ['dddddd', 'dddddddd', 'DDD'])
+           .string('s', 'string-of-3-chars', /^.{3}$/)
+           .multi('m', 'multi-opt')
+           .opts([ { shortName: ['A', 'O'], longName: 'all', description: 'It is A and O' },
+                   { shortName: 'S', longName: 'required-string', hasArg: true, required: true } ])
+           .help('test')
+           .parse());
 
 console.log('a', opt.value('a'));
 console.log('b', opt.value('b'));
@@ -170,6 +172,14 @@ of the option, side effects are not desireable.
 
 Pre-made callbacks are available in util module of the optist package.
 
+Optist.prototype.opts(options)
+------------------------------
+
+A shortcut method to define multiple options. Each option definition
+is an object with properties from list: shortName, longName, hasArg,
+required, defaultValue, multi, optArgCb, description. See
+Optist.prototype.o() for definition of each property.
+
 Optist.prototype.additional(restRequireMin, restRequireMax)
 -----------------------------------------------------------
 
@@ -279,12 +289,12 @@ const Optist = require('optist');
 const ou = require('optist/util');
 
 var opt = ((new Optist())
-	   .o(undefined, 'integer-option', true, false, '42', false, ou.integerCb)
-	   .parse())
+           .o(undefined, 'integer-option', true, false, '42', false, ou.integerCb)
+           .parse())
 console.log('integer option:',
-	    opt.value('integer-option'),
-	    'of type',
-	    typeof(opt.value('integer-option')));
+            opt.value('integer-option'),
+            'of type',
+            typeof(opt.value('integer-option')));
 ```
 
 

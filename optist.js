@@ -107,6 +107,46 @@ Optist.prototype.multi = function(shortName, longName) {
 	return this.o(shortName, longName, true, false, undefined, true, undefined);
 };
 
+Optist.prototype.opts = function(opts) {
+	var err;
+	if (! Array.isArray(opts)) {
+		opts = [ opts ];
+	}
+	opts.some(function(o) {
+		console.log(o);
+		var pn;
+		if (! (o && (typeof(o) === 'object'))) {
+			err = new Error('Invalid option definition object');
+			return true;
+		}
+		if (typeof(o.shortName) === 'string') {
+			pn = o.shortName;
+		} else if (Array.isArray(o.shortName) && (o.shortName.length > 0) && typeof(o.shortName[0]) === 'string') {
+			pn = o.shortName[0];
+		} else if (typeof(o.longName) === 'string') {
+			pn = o.longName;
+		} else if (Array.isArray(o.longName) && (o.longName.length > 0) && typeof(o.longName[0]) === 'string') {
+			pn = o.longName[0];
+		} else {
+			err = new Error('Invalid names in option definition object');
+			return true;
+		}
+		try {
+			this.o(o.shortName, o.longName, o.hasArg, o.required, o.defaultValue, o.multi, o.optArgCb);
+			if (o.description) {
+				this.describeOpt(pn, o.description);
+			}
+		} catch (e) {
+			err = e;
+		}
+		return err ? true : false;
+	}.bind(this));
+	if (err) {
+		throw err;
+	}
+	return this;
+};
+
 Optist.prototype.o = function(shortName,
 							  longName,
 							  hasArg,
