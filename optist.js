@@ -132,7 +132,7 @@ Optist.prototype.opts = function(opts) {
 			return true;
 		}
 		try {
-			this.o(o.shortName, o.longName, o.hasArg, o.required, o.defaultValue, o.multi, o.optArgCb);
+			this.o(o.shortName, o.longName, o.hasArg, o.required, o.defaultValue, o.multi, o.optArgCb, o.requiresAlso, o.conflictsWith);
 			if (o.description) {
 				this.describeOpt(pn, o.description);
 			}
@@ -153,7 +153,9 @@ Optist.prototype.o = function(shortName,
 							  required,
 							  defaultValue,
 							  multi,
-							  optArgCb) {
+							  optArgCb,
+							  requiresAlso,
+							  conflictsWith) {
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
@@ -190,6 +192,24 @@ Optist.prototype.o = function(shortName,
 	if (! (shortName || longName)) {
 		throw new Error('Option required either a short or long name');
 	}
+	if ((requiresAlso === undefined) || (requiresAlso === null)) {
+		requiresAlso = [];
+	} else if (! Array.isArray(requiresAlso)) {
+		requiresAlso = [ requiresAlso ];
+	}
+	if (requiresAlso.some(function(x) { return (! ((typeof(x) === 'string') && (x.length > 0))); })) {
+		throw new Error('Invalid name in requiresAlso');
+	}
+	requiresAlso = Array.from(requiresAlso);
+	if ((conflictsWith === undefined) || (conflictsWith === null)) {
+		conflictsWith = [];
+	} else if (! Array.isArray(conflictsWith)) {
+		conflictsWith = [ conflictsWith ];
+	}
+	if (conflictsWith.some(function(x) { return (! ((typeof(x) === 'string') && (x.length > 0))); })) {
+		throw new Error('Invalid name in conflictsWith');
+	}
+	conflictsWith = Array.from(conflictsWith);
 	var opt = {
 		shortName: shortName ? shortName[0] : undefined,
 		longName: longName ? longName[0] : undefined,
@@ -200,6 +220,8 @@ Optist.prototype.o = function(shortName,
 		required: required,
 		multi: multi,
 		optArgCb: undefined,
+		requiresAlso: requiresAlso,
+		conflictsWith: conflictsWith,
 		description: undefined,
 		value: undefined,
 		lastSeen: undefined
@@ -462,6 +484,48 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 			throw new Error(em);
 		}
 	}.bind(this));
+	this._snl.forEach(function(n) {
+		o = this._opts.get(n);
+		if (o.value === undefined) {
+			return;
+		}
+		o.requiresAlso.forEach(function(n2) {
+			var o2 = this._opts.get(n2);
+			if (! o2) {
+				throw new Error('Option ' +
+								(o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+								' referring to an undefined option "' +
+								n2 +
+								'" as required');
+			}
+			if (o2.value === undefined) {
+				em = ('Option ' +
+					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+					  ' requires also option ' +
+					  (o2.longName ? ('--' + o2.longName) : ('-' + o2.shortName)));
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
+			}
+		}.bind(this));
+		o.conflictsWith.forEach(function(n2) {
+			var o2 = this._opts.get(n2);
+			if (! o2) {
+				throw new Error('Option ' +
+								(o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+								' referring to an undefined option "' +
+								n2 +
+								'" as conflicting');
+			}
+			if (o2.value !== undefined) {
+				em = ('Option ' +
+					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+					  ' conflicts with option ' +
+					  (o2.longName ? ('--' + o2.longName) : ('-' + o2.shortName)));
+				this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+				throw new Error(em);
+			}
+		}.bind(this));
+	}.bind(this));
 	if (this._restRequireMin !== undefined) {
 		if (av.length < this._restRequireMin) {
 			em = 'Too few command line arguments after options';
@@ -599,6 +663,20 @@ Optist.prototype.forEach = function(cb) {
 		cb(o.shortName, o.longName, v);
 	}.bind(this));
 	return this;
+};
+
+Optist.prototype.some = function(cb) {
+	if (! this._parsed) {
+		throw new Error('Options not yet parsed');
+	}
+	if (typeof(cb) !== 'function') {
+		throw new Error('Bad callback');
+	}
+	return this._snl.some(function(n) {
+		var o = this._opts.get(n);
+		var v = this.value(n);
+		return cb(o.shortName, o.longName, v);
+	}.bind(this));
 };
 
 Optist.prototype.help = function(cmd) {

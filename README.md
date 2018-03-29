@@ -114,8 +114,8 @@ option. The option can be referred by any of its aliases, short or
 long. This function can not be called, if optArgCb has already been
 set for the function.
 
-Optist.prototype.o(shortName, longName, hasArg, required, defaultValue, multi, optArgCb)
-----------------------------------------------------------------------------------------
+Optist.prototype.o(shortName, longName, hasArg, required, defaultValue, multi, optArgCb, requiresAlso, conflictsWith)
+---------------------------------------------------------------------------------------------------------------------
 
 A full featured interface for option definition.
 
@@ -171,6 +171,16 @@ Since this callback is always also called for possible default values
 of the option, side effects are not desireable.
 
 Pre-made callbacks are available in util module of the optist package.
+
+### requiresAlso
+
+A single string or array of strings listing options that are also
+required if this option is present.
+
+### conflictsWith
+
+A single string or array of strings listing options that must not be
+present if this option is present.
 
 Optist.prototype.opts(options)
 ------------------------------

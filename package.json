@@ -1,6 +1,6 @@
 {
 	"name": "optist",
-	"version": "0.9.9",
+	"version": "1.0.0",
 	"description": "Command line option parser",
 	"main": "optist.js",
 	"dependencies": {
