@@ -336,7 +336,7 @@ Optist.prototype.attachOptArgCb = function(name, optArgCb) {
 	if (o.optArgCb) {
 		throw new Error('Argument callback can be set only once');
 	}
-	if (! opt.hasArg) {
+	if (! o.hasArg) {
 		throw new Error('Argument callback is only allowed for an option with argument');
 	}
 	if (typeof(optArgCb) !== 'function') {
