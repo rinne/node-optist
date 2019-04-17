@@ -63,6 +63,24 @@ function integerWithLimitsCbFactory(min, max) {
 	};
 }
 
+function allowListCbFactory(allowedValues) {
+	if (! (Array.isArray(allowedValues))) {
+		allowedValues = [];
+	}
+	allowedValues = allowedValues.filter(function(x) { return ((typeof(x) === 'string') || (x instanceof RegExp)); });
+	return function(v) {
+		if (typeof(v) !== 'string') {
+			return undefined;
+		}
+		return ((allowedValues.some(function(x) {
+			if (x instanceof RegExp) {
+				return (v.match(x)) ? true : false;
+			}
+			return (x === v);
+		})) ? v : undefined);
+	}
+}
+
 function existingFileNameCb(s) {
 	try {
 		if (! fs.isFile(fs.statSync(s))) {
@@ -79,6 +97,7 @@ module.exports = {
 	integerCb: integerCb,
 	integerListCb: integerListCb,
 	integerWithLimitsCbFactory: integerWithLimitsCbFactory,
+	allowListCbFactory: allowListCbFactory,
 	existingFileNameCb: existingFileNameCb,
 	ipv4: ipv4
 };
