@@ -113,7 +113,7 @@ Optist.prototype.opts = function(opts) {
 		opts = [ opts ];
 	}
 	opts.some(function(o) {
-		console.log(o);
+		//console.log(o);
 		var pn;
 		if (! (o && (typeof(o) === 'object'))) {
 			err = new Error('Invalid option definition object');
