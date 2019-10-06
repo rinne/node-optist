@@ -498,7 +498,10 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 								n2 +
 								'" as required');
 			}
-			if (o2.value === undefined) {
+			if ((o2.hasArg && (o2.value === undefined)) ||
+				((! o2.hasArg) &&
+				 ((o2.multi && (o2.value === 0)) ||
+				  ((! o2.multi) && (o2.value === false))))) {
 				em = ('Option ' +
 					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
 					  ' requires also option ' +
@@ -516,7 +519,10 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 								n2 +
 								'" as conflicting');
 			}
-			if (o2.value !== undefined) {
+			if ((o2.hasArg && (o2.value !== undefined)) ||
+				((! o2.hasArg) &&
+				 ((o2.multi && (o2.value !== 0)) ||
+				  ((! o2.multi) && (o2.value !== false))))) {
 				em = ('Option ' +
 					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
 					  ' conflicts with option ' +
