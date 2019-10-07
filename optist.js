@@ -498,10 +498,14 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 								n2 +
 								'" as required');
 			}
-			if ((o2.hasArg && (o2.value === undefined)) ||
-				((! o2.hasArg) &&
-				 ((o2.multi && (o2.value === 0)) ||
-				  ((! o2.multi) && (o2.value === false))))) {
+			if (((((o2.hasArg && (o2.value !== undefined)) ||
+				   ((! o2.hasArg) &&
+					((o2.multi && (o2.value !== 0)) ||
+					 ((! o2.multi) && (o2.value !== false))))) ? 1 : 0) +
+				 (((o.hasArg && (o.value !== undefined)) ||
+				   ((! o.hasArg) &&
+					((o.multi && (o.value !== 0)) ||
+					 ((! o.multi) && (o.value !== false))))) ? 1 : 0)) == 1) {
 				em = ('Option ' +
 					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
 					  ' requires also option ' +
@@ -519,10 +523,14 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 								n2 +
 								'" as conflicting');
 			}
-			if ((o2.hasArg && (o2.value !== undefined)) ||
-				((! o2.hasArg) &&
-				 ((o2.multi && (o2.value !== 0)) ||
-				  ((! o2.multi) && (o2.value !== false))))) {
+			if (((((o2.hasArg && (o2.value !== undefined)) ||
+				   ((! o2.hasArg) &&
+					((o2.multi && (o2.value !== 0)) ||
+					 ((! o2.multi) && (o2.value !== false))))) ? 1 : 0) +
+				 (((o.hasArg && (o.value !== undefined)) ||
+				   ((! o.hasArg) &&
+					((o.multi && (o.value !== 0)) ||
+					 ((! o.multi) && (o.value !== false))))) ? 1 : 0)) > 1) {
 				em = ('Option ' +
 					  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
 					  ' conflicts with option ' +
