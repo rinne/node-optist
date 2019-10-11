@@ -83,14 +83,30 @@ function allowListCbFactory(allowedValues) {
 
 function existingFileNameCb(s) {
 	try {
-		if (! fs.isFile(fs.statSync(s))) {
-			throw new Error('Invalid file name ' + s);
+		if (! fs.statSync(s).isFile()) {
+			throw new Error('Invalid file');
 		}
 	} catch (e) {
 		s = undefined;
-	};
+	}
 	return s;
 }
+
+function fileContentsStringCb(s) {
+	try {
+		if (! fs.statSync(s).isFile()) {
+			throw new Error('Invalid file');
+		}
+		s = fs.readFileSync(s, { encoding: 'utf8', flag: 'r' } );
+		if (! s) {
+			throw new Error('File read error');
+		}
+	} catch (e) {
+		s = undefined;
+	}
+	return s;
+}
+
 
 module.exports = {
 	nonEmptyCb: nonEmptyCb,
@@ -99,5 +115,6 @@ module.exports = {
 	integerWithLimitsCbFactory: integerWithLimitsCbFactory,
 	allowListCbFactory: allowListCbFactory,
 	existingFileNameCb: existingFileNameCb,
+	fileContentsStringCb: fileContentsStringCb,
 	ipv4: ipv4
 };
