@@ -192,13 +192,14 @@ Optist.prototype.o = function(shortName,
 	if (! (shortName || longName)) {
 		throw new Error('Option required either a short or long name');
 	}
+	var optName = (longName ? ('--' + longName) : (shortName ? ('-' + shortName) : '<unknown>'));
 	if ((requiresAlso === undefined) || (requiresAlso === null)) {
 		requiresAlso = [];
 	} else if (! Array.isArray(requiresAlso)) {
 		requiresAlso = [ requiresAlso ];
 	}
 	if (requiresAlso.some(function(x) { return (! ((typeof(x) === 'string') && (x.length > 0))); })) {
-		throw new Error('Invalid name in requiresAlso');
+		throw new Error('Invalid name in requiresAlso in ' + optName);
 	}
 	requiresAlso = Array.from(requiresAlso);
 	if ((conflictsWith === undefined) || (conflictsWith === null)) {
@@ -207,7 +208,7 @@ Optist.prototype.o = function(shortName,
 		conflictsWith = [ conflictsWith ];
 	}
 	if (conflictsWith.some(function(x) { return (! ((typeof(x) === 'string') && (x.length > 0))); })) {
-		throw new Error('Invalid name in conflictsWith');
+		throw new Error('Invalid name in conflictsWith in ' + optName);
 	}
 	conflictsWith = Array.from(conflictsWith);
 	var opt = {
@@ -228,28 +229,28 @@ Optist.prototype.o = function(shortName,
 	};
 	if (optArgCb) {
 		if (! opt.hasArg) {
-			throw new Error('Argument callback is only allowed for an option with argument');
+			throw new Error('Argument callback is only allowed for an option with argument (' + optName + ')');
 		}
 		if (typeof(optArgCb) !== 'function') {
-			throw new Error('Invalid argument callback');
+			throw new Error('Invalid argument callback in ' + optName);
 		}
 	} else {
 		optArgCb = undefined;
 	}
 	if (defaultValue !== undefined) {
 		if (! opt.hasArg) {
-			throw new Error('Default value not allowed for an option with no argument');
+			throw new Error('Default value not allowed for an option with no argument (' + optName + ')');
 		}
 		if (opt.required) {
-			throw new Error('Default value not allowed for a required option');
+			throw new Error('Default value not allowed for a required option in ' + optName);
 		}
 		if (typeof(defaultValue) !== 'string') {
-			throw new Error('Default value must be a string');
+			throw new Error('Default value must be a string in ' + optName);
 		}
 		if (optArgCb) {
 			defaultValue = optArgCb(defaultValue);
 			if (defaultValue === undefined) {
-				throw new Error('Default value is not accepted by argument callback');
+				throw new Error('Default value is not accepted by argument callback for '  + optName);
 			}
 		}
 	}
