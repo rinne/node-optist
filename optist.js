@@ -9,7 +9,6 @@ var Optist = function() {
 	this._synthCnt = 0;
 	this._parsed = false;
 	this._snl = [];
-	this._explicitlyStopped = false;
 	this._restRequireMin = undefined;
 	this._restRequireMax = undefined;
 	this._paramName = [];
@@ -132,7 +131,7 @@ Optist.prototype.opts = function(opts) {
 			return true;
 		}
 		try {
-			this.o(o.shortName, o.longName, o.hasArg, o.required, o.defaultValue, o.multi, o.optArgCb, o.requiresAlso, o.conflictsWith);
+			this.o(o.shortName, o.longName, o.hasArg, o.required, o.defaultValue, o.multi, o.optArgCb, o.requiresAlso, o.conflictsWith, o.environment);
 			if (o.description) {
 				this.describeOpt(pn, o.description);
 			}
@@ -155,7 +154,8 @@ Optist.prototype.o = function(shortName,
 							  multi,
 							  optArgCb,
 							  requiresAlso,
-							  conflictsWith) {
+							  conflictsWith,
+							  environment) {
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
@@ -211,6 +211,11 @@ Optist.prototype.o = function(shortName,
 		throw new Error('Invalid name in conflictsWith in ' + optName);
 	}
 	conflictsWith = Array.from(conflictsWith);
+	if ((environment === undefined) || (environment === null)) {
+		environment = undefined;
+	} else if (! (environment && (typeof(environment) === 'string'))) {
+		throw new Error('Invalid environment name in ' + optName);
+	}
 	var opt = {
 		shortName: shortName ? shortName[0] : undefined,
 		longName: longName ? longName[0] : undefined,
@@ -223,6 +228,7 @@ Optist.prototype.o = function(shortName,
 		optArgCb: undefined,
 		requiresAlso: requiresAlso,
 		conflictsWith: conflictsWith,
+		environment: environment,
 		description: undefined,
 		value: undefined,
 		lastSeen: undefined
@@ -261,7 +267,7 @@ Optist.prototype.o = function(shortName,
 	} else if (opt.multi) {
 		opt.value = 0;
 	} else if (! opt.hasArg) {
-		opt.value = false;
+		opt.value = null;
 	}
 	if (! shortName) {
 		shortName = [ '-' + (++this._synthCnt) + '-' ];
@@ -371,14 +377,12 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 	while (av.length > 0) {
 		if (av[0] === '--') {
 			av.shift();
-			this._explicitlyStopped = true;
 			break;
 		}
-		if ((m = av[0].match(/^(-)(.)()()$/)) ||
-			(m = av[0].match(/^(-)([^-=]+)()()$/)) ||
+		if ((m = av[0].match(/^(-)([^-][^=-]*)()()$/)) ||
 			(m = av[0].match(/^(--)([^=][^=][^=]*)()()$/)) ||
 			(m = av[0].match(/^(--)([^=][^=][^=]*)(=)(.*)$/)) ||
-			(m = av[0].match(/^(-.*()()())$/))) {
+			(m = av[0].match(/^(-.+()()())$/))) {
 			av.shift();
 			if (m[2] === '') {
 				em = 'Malformed option ' + m[1];
@@ -476,7 +480,96 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 		o.lastSeen = n;
 	}
 	this._snl.forEach(function(n) {
-		o = this._opts.get(n);
+		var o = this._opts.get(n);
+		var df = o.environment ? process.env[o.environment] : undefined;
+		if (o.multi && o.hasArg) {
+			if (Array.isArray(o.value) && (o.value.length == 0)) {
+				if (typeof(df) === 'string') {
+					if (o.optArgCb) {
+						df = o.optArgCb(df);
+						if (df === undefined) {
+							em = ('Invalid default value ' +
+								  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+								  ' from environment');
+							this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+							throw new Error(em);
+						}
+					}
+					o.value = [ df ];
+				}
+			}
+		} else if (o.multi) {
+			if (o.value === 0) {
+				if (typeof(df) === 'string') {
+					switch (df.toLowerCase()) {
+					case 'yes':
+					case 'true':
+					case '+':
+						o.value = 1;
+						break;
+					case 'no':
+					case 'false':
+					case '-':
+						o.value = 0;
+						break;
+					default:
+						if (/^(0|[1-9][0-9]{0,15})$/.test(df) && Number.isSafeInteger(parseInt(df))) {
+							o.value = parseInt(df);
+						} else {
+							em = ('Invalid default value ' +
+								  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+								  ' from environment');
+							this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+							throw new Error(em);
+						}
+					}
+				}
+			}
+		} else if (o.hasArg) {
+			if (o.value === undefined) {
+				if (typeof(df) === 'string') {
+					if (o.optArgCb) {
+						df = o.optArgCb(df);
+						if (df === undefined) {
+							em = ('Invalid default value ' +
+								  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+								  ' from environment');
+							this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+							throw new Error(em);
+						}
+					}
+					o.value = df;
+				}
+			}
+		} else {
+			if (o.value === null) {
+				if (typeof(df) === 'string') {
+					switch (df.toLowerCase()) {
+					case 'yes':
+					case 'true':
+					case '+':
+						o.value = true;
+						break;
+					case 'no':
+					case 'false':
+					case '-':
+						o.value = false;
+						break;
+					default:
+						em = ('Invalid default value ' +
+							  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
+							  ' from environment');
+						this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
+						throw new Error(em);
+					}
+				} else {
+					o.value = false;
+				}
+			}
+		}
+	}.bind(this));
+	this._snl.forEach(function(n) {
+		var o = this._opts.get(n);
 		if (o.required && (o.value === undefined)) {
 			em = ('Required option ' +
 				  (o.longName ? ('--' + o.longName) : ('-' + o.shortName)) +
@@ -486,7 +579,7 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 		}
 	}.bind(this));
 	this._snl.forEach(function(n) {
-		o = this._opts.get(n);
+		var o = this._opts.get(n);
 		if (o.value === undefined) {
 			return;
 		}
@@ -561,55 +654,50 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 }
 
 Optist.prototype.parsePosix = function(av, restRequireMin, restRequireMax) {
-	var em;
 	if (this._parsed) {
 		throw new Error('Options already parsed');
 	}
 	if (! av) {
 		av = process.argv.slice(2);
 	}
+	if (! Array.isArray(av)) {
+		throw new Error('Bad argument list');
+	}
 	if ((restRequireMin !== undefined) || (restRequireMax !== undefined)) {
 		this.additional(restRequireMin, restRequireMax)
 	}
-	restRequireMin = this._restRequireMin;
-	restRequireMax = this._restRequireMax;
-	this._restRequireMin = undefined;
-	this._restRequireMax = undefined;
-	var rest = [];
-	do {
-		this._parsed = false;
-		this._rest = undefined;
-		this.parse(av);
-		if (this._explicitlyStopped) {
-			rest = rest.concat(this.rest());
-			break;
-		}
-		av = this.rest();
-		while ((av.length > 0) && (! av[0].match(/^-/))) {
-			rest.push(av.shift());
-		}
-	} while(av.length > 0);
-	this._restRequireMin = restRequireMin;
-	this._restRequireMax = restRequireMax;
-	if (this._restRequireMin !== undefined) {
-		if (rest.length < this._restRequireMin) {
-			this._parsed = false;
-			em = 'Too few command line arguments after options';
-			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
-			throw new Error(em);
-		}
-	}
-	if (this._restRequireMax !== undefined) {
-		if (rest.length > this._restRequireMax) {
-			this._parsed = false;
-			em = 'Too many command line arguments after options';
-			this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
-			throw new Error(em);
+	var m, n, o, a, em;
+	var optList = [], argList = [];
+	while (av.length > 0) {
+		if (av[0] === '--') {
+			av.shift();
+			while (av.length > 0) {
+				argList.push(av.shift());
+			}
+		} else if (av[0].match(/^--[^=]*=.*$/)) {
+			optList.push(av.shift());
+		} else if (m = av[0].match(/^--([^=]+)$/)) {
+			o = this._opts.get(m[1]);
+			if (o && o.hasArg && (av.length > 1)) {
+				optList.push(av.shift(), av.shift());
+			} else {
+				optList.push(av.shift());
+			}
+		} else if (m = av[0].match(/^-([^-])$/)) {
+			o = this._opts.get(m[1]);
+			if (o && o.hasArg && (av.length > 1)) {
+				optList.push(av.shift(), av.shift());
+			} else {
+				optList.push(av.shift());
+			}
+		} else if ((av[0] === '-') || (av[0][0] !== '-')) {
+			argList.push(av.shift());
+		} else {
+			optList.push(av.shift());
 		}
 	}
-	this._rest = rest;
-	return this;
-};
+	return this.parse([].concat(optList).concat(['--']).concat(argList), restRequireMin, restRequireMax);
+}
 
 Optist.prototype.rest = function() {
 	if (! this._parsed) {

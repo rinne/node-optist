@@ -65,7 +65,7 @@ function integerWithLimitsCbFactory(min, max) {
 
 function allowListCbFactory(allowedValues) {
 	if (! (Array.isArray(allowedValues))) {
-		allowedValues = [];
+		allowedValues = [ allowedValues ];
 	}
 	allowedValues = allowedValues.filter(function(x) { return ((typeof(x) === 'string') || (x instanceof RegExp)); });
 	return function(v) {
@@ -107,6 +107,29 @@ function fileContentsStringCb(s) {
 	return s;
 }
 
+function jsonObject(s) {
+	try {
+		s = JSON.parse(s);
+		if (! (s && (typeof(s) === 'object'))) {
+			throw new Error('JSON value is not an object');
+		}
+	} catch (e) {
+		s = undefined;
+	}
+	return s;
+}
+
+function jsonArray(s) {
+	try {
+		s = JSON.parse(s);
+		if (! Array.isArray(s)) {
+			throw new Error('JSON value is not an array');
+		}
+	} catch (e) {
+		s = undefined;
+	}
+	return s;
+}
 
 module.exports = {
 	nonEmptyCb: nonEmptyCb,
@@ -116,5 +139,7 @@ module.exports = {
 	allowListCbFactory: allowListCbFactory,
 	existingFileNameCb: existingFileNameCb,
 	fileContentsStringCb: fileContentsStringCb,
-	ipv4: ipv4
+	ipv4: ipv4,
+	jsonObject: jsonObject,
+	jsonArray: jsonArray
 };

@@ -114,8 +114,8 @@ option. The option can be referred by any of its aliases, short or
 long. This function can not be called, if optArgCb has already been
 set for the function.
 
-Optist.prototype.o(shortName, longName, hasArg, required, defaultValue, multi, optArgCb, requiresAlso, conflictsWith)
----------------------------------------------------------------------------------------------------------------------
+Optist.prototype.o(shortName, longName, hasArg, required, defaultValue, multi, optArgCb, requiresAlso, conflictsWith, environment)
+----------------------------------------------------------------------------------------------------------------------------------
 
 A full featured interface for option definition.
 
@@ -181,6 +181,13 @@ required if this option is present.
 
 A single string or array of strings listing options that must not be
 present if this option is present.
+
+### environment
+
+If the option is not given on the command line, read its value from
+the environment with a given name. For options without argument, the
+allowed values are 'yes' and 'no' (with aliases 'true'/'false' and
+'+'/'-' respectively).
 
 Optist.prototype.opts(options)
 ------------------------------
