@@ -1,6 +1,6 @@
 'use strict';
 
-var Optist = function() {
+const Optist = function() {
 	if (! (this instanceof Optist)) {
 		throw new Error('Constructor must not be called directly');
 	}
@@ -350,11 +350,11 @@ Optist.prototype.attachOptArgCb = function(name, optArgCb) {
 		throw new Error('Invalid argument callback');
 	}
 	if (o.defaultValue !== undefined) {
-		var ndv = optArgCb(o.defaultValue);
+		let ndv = optArgCb(o.defaultValue);
 		if (ndv === undefined) {
 			throw new Error('Default value is not accepted by argument callback');
 		}
-		o.defaultValue = nd;
+		o.defaultValue = ndv;
 	}
 	o.optArgCb = optArgCb;
 	return this;
@@ -391,7 +391,7 @@ Optist.prototype.parse = function(av, restRequireMin, restRequireMax) {
 			}
 			if ((m[1] === '-') && (m[2].length > 1)) {
 				m[2].split('').forEach(function(n) {
-					o = this._opts.get(n);
+					var o = this._opts.get(n);
 					if (o === undefined) {
 						em = 'Unknown option -' + n;
 						this.showErrorMessageHelpAndExitIfHelpEnabled(em, 1);
